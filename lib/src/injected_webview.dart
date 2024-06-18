@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'dart:typed_data';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter_injected_web3/src/js_callback_model.dart';
@@ -8,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 // ignore: must_be_immutable
-class InjectedWebview extends StatefulWidget implements WebView {
+class InjectedWebview extends StatefulWidget {
   /// `gestureRecognizers` specifies which gestures should be consumed by the WebView.
   /// It is possible for other gesture recognizers to be competing with the web view on pointer
   /// events, e.g if the web view is inside a [ListView] the [ListView] will want to handle
@@ -18,8 +17,6 @@ class InjectedWebview extends StatefulWidget implements WebView {
   /// were not claimed by any other gesture recognizer.
   final Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
 
-  ///The window id of a [CreateWindowAction.windowId].
-  @override
   final int? windowId;
   final bool isDebug;
   int chainId;
@@ -34,22 +31,20 @@ class InjectedWebview extends StatefulWidget implements WebView {
     this.initialUrlRequest,
     this.initialFile,
     this.initialData,
-    this.initialOptions,
+    this.initialSettings,
     this.initialUserScripts,
     this.pullToRefreshController,
-    this.implementation = WebViewImplementation.NATIVE,
     this.contextMenu,
     this.onWebViewCreated,
     this.onLoadStart,
     this.onLoadStop,
-    this.onLoadError,
-    this.onLoadHttpError,
+    this.onReceivedError,
+    this.onReceivedHttpError,
     this.onConsoleMessage,
     this.onProgressChanged,
     this.shouldOverrideUrlLoading,
     this.onLoadResource,
     this.onScrollChanged,
-    @Deprecated('Use `onDownloadStartRequest` instead') this.onDownloadStart,
     this.onDownloadStartRequest,
     this.onLoadResourceCustomScheme,
     this.onCreateWindow,
@@ -60,13 +55,13 @@ class InjectedWebview extends StatefulWidget implements WebView {
     this.onReceivedHttpAuthRequest,
     this.onReceivedServerTrustAuthRequest,
     this.onReceivedClientCertRequest,
-    this.onFindResultReceived,
+    this.findInteractionController,
     this.shouldInterceptAjaxRequest,
     this.onAjaxReadyStateChange,
     this.onAjaxProgress,
     this.shouldInterceptFetchRequest,
     this.onUpdateVisitedHistory,
-    this.onPrint,
+    this.onPrintRequest,
     this.onLongPressHitTestResult,
     this.onEnterFullscreen,
     this.onExitFullscreen,
@@ -85,14 +80,12 @@ class InjectedWebview extends StatefulWidget implements WebView {
     this.androidOnRenderProcessResponsive,
     this.androidOnRenderProcessUnresponsive,
     this.androidOnFormResubmission,
-    @Deprecated('Use `onZoomScaleChanged` instead') this.androidOnScaleChanged,
     this.androidOnReceivedIcon,
     this.androidOnReceivedTouchIconUrl,
     this.androidOnJsBeforeUnload,
     this.androidOnReceivedLoginRequest,
     this.iosOnWebContentProcessDidTerminate,
     this.iosOnDidReceiveServerRedirectForProvisionalNavigation,
-    this.iosOnNavigationResponse,
     this.iosShouldAllowDeprecatedTLS,
     this.gestureRecognizers,
     this.signTransaction,
@@ -104,298 +97,171 @@ class InjectedWebview extends StatefulWidget implements WebView {
     this.watchAsset,
     this.addEthereumChain,
     this.isDebug = false,
+    this.iosOnNavigationResponse,
   }) : super();
 
   @override
   // ignore: library_private_types_in_public_api
   _InjectedWebviewState createState() => _InjectedWebviewState();
 
-  @override
-  final void Function(InAppWebViewController controller)?
-      androidOnGeolocationPermissionsHidePrompt;
+  final void Function(InAppWebViewController controller)? androidOnGeolocationPermissionsHidePrompt;
 
-  @override
-  final Future<GeolocationPermissionShowPromptResponse?> Function(
-          InAppWebViewController controller, String origin)?
+  final Future<GeolocationPermissionShowPromptResponse?> Function(InAppWebViewController controller, String origin)?
       androidOnGeolocationPermissionsShowPrompt;
 
-  @override
-  final Future<PermissionRequestResponse?> Function(
-      InAppWebViewController controller,
-      String origin,
-      List<String> resources)? androidOnPermissionRequest;
+  final Future<PermissionResponse?> Function(InAppWebViewController controller, PermissionRequest permissionRequest)?
+      androidOnPermissionRequest;
 
-  @override
   final Future<SafeBrowsingResponse?> Function(
-      InAppWebViewController controller,
-      Uri url,
-      SafeBrowsingThreat? threatType)? androidOnSafeBrowsingHit;
+      InAppWebViewController controller, Uri url, SafeBrowsingThreat? threatType)? androidOnSafeBrowsingHit;
 
-  @override
   final InAppWebViewInitialData? initialData;
 
-  @override
   final String? initialFile;
 
-  @override
-  final InAppWebViewGroupOptions? initialOptions;
+  final InAppWebViewSettings? initialSettings;
 
-  @override
   final URLRequest? initialUrlRequest;
 
-  @override
-  final WebViewImplementation implementation;
-
-  @override
   final UnmodifiableListView<UserScript>? initialUserScripts;
 
-  @override
   final PullToRefreshController? pullToRefreshController;
 
-  @override
   final ContextMenu? contextMenu;
 
-  @override
-  final void Function(InAppWebViewController controller, Uri? url)?
-      onPageCommitVisible;
+  final void Function(InAppWebViewController controller, Uri? url)? onPageCommitVisible;
 
-  @override
-  final void Function(InAppWebViewController controller, String? title)?
-      onTitleChanged;
+  final void Function(InAppWebViewController controller, String? title)? onTitleChanged;
 
-  @override
-  final void Function(InAppWebViewController controller)?
-      iosOnDidReceiveServerRedirectForProvisionalNavigation;
+  final void Function(InAppWebViewController controller)? iosOnDidReceiveServerRedirectForProvisionalNavigation;
 
-  @override
-  final void Function(InAppWebViewController controller)?
-      iosOnWebContentProcessDidTerminate;
+  final void Function(InAppWebViewController controller)? iosOnWebContentProcessDidTerminate;
 
-  @override
-  final Future<IOSNavigationResponseAction?> Function(
-      InAppWebViewController controller,
-      IOSWKNavigationResponse navigationResponse)? iosOnNavigationResponse;
+  final Future<NavigationResponseAction?> Function(
+      InAppWebViewController controller, NavigationResponse navigationResponse)? iosOnNavigationResponse;
 
-  @override
-  final Future<IOSShouldAllowDeprecatedTLSAction?> Function(
-      InAppWebViewController controller,
-      URLAuthenticationChallenge challenge)? iosShouldAllowDeprecatedTLS;
+  final Future<ShouldAllowDeprecatedTLSAction?> Function(
+      InAppWebViewController controller, URLAuthenticationChallenge challenge)? iosShouldAllowDeprecatedTLS;
 
-  @override
-  final Future<AjaxRequestAction> Function(
-          InAppWebViewController controller, AjaxRequest ajaxRequest)?
-      onAjaxProgress;
+  final Future<AjaxRequestAction> Function(InAppWebViewController controller, AjaxRequest ajaxRequest)? onAjaxProgress;
 
-  @override
-  final Future<AjaxRequestAction?> Function(
-          InAppWebViewController controller, AjaxRequest ajaxRequest)?
+  final Future<AjaxRequestAction?> Function(InAppWebViewController controller, AjaxRequest ajaxRequest)?
       onAjaxReadyStateChange;
 
-  @override
-  final void Function(
-          InAppWebViewController controller, ConsoleMessage consoleMessage)?
-      onConsoleMessage;
+  final void Function(InAppWebViewController controller, ConsoleMessage consoleMessage)? onConsoleMessage;
 
-  @override
-  final Future<bool?> Function(InAppWebViewController controller,
-      CreateWindowAction createWindowAction)? onCreateWindow;
+  final Future<bool?> Function(InAppWebViewController controller, CreateWindowAction createWindowAction)?
+      onCreateWindow;
 
-  @override
   final void Function(InAppWebViewController controller)? onCloseWindow;
 
-  @override
   final void Function(InAppWebViewController controller)? onWindowFocus;
 
-  @override
   final void Function(InAppWebViewController controller)? onWindowBlur;
 
-  @override
-  final void Function(InAppWebViewController controller, Uint8List icon)?
-      androidOnReceivedIcon;
+  final void Function(InAppWebViewController controller, Uint8List icon)? androidOnReceivedIcon;
 
-  @override
-  final void Function(
-          InAppWebViewController controller, Uri url, bool precomposed)?
-      androidOnReceivedTouchIconUrl;
+  final void Function(InAppWebViewController controller, Uri url, bool precomposed)? androidOnReceivedTouchIconUrl;
 
-  ///Use [onDownloadStartRequest] instead
-  @Deprecated('Use `onDownloadStartRequest` instead')
-  @override
-  final void Function(InAppWebViewController controller, Uri url)?
-      onDownloadStart;
+  final void Function(InAppWebViewController controller, DownloadStartRequest downloadStartRequest)?
+      onDownloadStartRequest;
 
-  @override
-  final void Function(InAppWebViewController controller,
-      DownloadStartRequest downloadStartRequest)? onDownloadStartRequest;
+  final FindInteractionController? findInteractionController;
 
-  @override
-  final void Function(InAppWebViewController controller, int activeMatchOrdinal,
-      int numberOfMatches, bool isDoneCounting)? onFindResultReceived;
+  final Future<JsAlertResponse?> Function(InAppWebViewController controller, JsAlertRequest jsAlertRequest)? onJsAlert;
 
-  @override
-  final Future<JsAlertResponse?> Function(
-          InAppWebViewController controller, JsAlertRequest jsAlertRequest)?
-      onJsAlert;
-
-  @override
-  final Future<JsConfirmResponse?> Function(
-          InAppWebViewController controller, JsConfirmRequest jsConfirmRequest)?
+  final Future<JsConfirmResponse?> Function(InAppWebViewController controller, JsConfirmRequest jsConfirmRequest)?
       onJsConfirm;
 
-  @override
-  final Future<JsPromptResponse?> Function(
-          InAppWebViewController controller, JsPromptRequest jsPromptRequest)?
+  final Future<JsPromptResponse?> Function(InAppWebViewController controller, JsPromptRequest jsPromptRequest)?
       onJsPrompt;
 
-  @override
-  final void Function(InAppWebViewController controller, Uri? url, int code,
-      String message)? onLoadError;
+  final void Function(InAppWebViewController controller, WebResourceRequest request, WebResourceError error)?
+      onReceivedError;
 
-  @override
-  final void Function(InAppWebViewController controller, Uri? url,
-      int statusCode, String description)? onLoadHttpError;
+  final void Function(InAppWebViewController controller, Uri? url, int statusCode, String description)?
+      onReceivedHttpError;
 
-  @override
-  final void Function(
-          InAppWebViewController controller, LoadedResource resource)?
-      onLoadResource;
+  final void Function(InAppWebViewController controller, LoadedResource resource)? onLoadResource;
 
-  @override
-  final Future<CustomSchemeResponse?> Function(
-      InAppWebViewController controller, Uri url)? onLoadResourceCustomScheme;
+  final Future<CustomSchemeResponse?> Function(InAppWebViewController controller, WebResourceRequest request)?
+      onLoadResourceCustomScheme;
 
-  @override
   final void Function(InAppWebViewController controller, Uri? url)? onLoadStart;
 
-  @override
   final void Function(InAppWebViewController controller, Uri? url)? onLoadStop;
 
-  @override
-  final void Function(InAppWebViewController controller,
-      InAppWebViewHitTestResult hitTestResult)? onLongPressHitTestResult;
+  final void Function(InAppWebViewController controller, InAppWebViewHitTestResult hitTestResult)?
+      onLongPressHitTestResult;
 
-  @override
-  final void Function(InAppWebViewController controller, Uri? url)? onPrint;
+  final Future<bool?> Function(
+      InAppWebViewController controller, WebUri? url, PlatformPrintJobController? printJobController)? onPrintRequest;
 
-  @override
-  final void Function(InAppWebViewController controller, int progress)?
-      onProgressChanged;
+  final void Function(InAppWebViewController controller, int progress)? onProgressChanged;
 
-  @override
-  final Future<ClientCertResponse?> Function(InAppWebViewController controller,
-      URLAuthenticationChallenge challenge)? onReceivedClientCertRequest;
+  final Future<ClientCertResponse?> Function(InAppWebViewController controller, URLAuthenticationChallenge challenge)?
+      onReceivedClientCertRequest;
 
-  @override
-  final Future<HttpAuthResponse?> Function(InAppWebViewController controller,
-      URLAuthenticationChallenge challenge)? onReceivedHttpAuthRequest;
+  final Future<HttpAuthResponse?> Function(InAppWebViewController controller, URLAuthenticationChallenge challenge)?
+      onReceivedHttpAuthRequest;
 
-  @override
   final Future<ServerTrustAuthResponse?> Function(
-      InAppWebViewController controller,
-      URLAuthenticationChallenge challenge)? onReceivedServerTrustAuthRequest;
+      InAppWebViewController controller, URLAuthenticationChallenge challenge)? onReceivedServerTrustAuthRequest;
 
-  @override
-  final void Function(InAppWebViewController controller, int x, int y)?
-      onScrollChanged;
+  final void Function(InAppWebViewController controller, int x, int y)? onScrollChanged;
 
-  @override
-  final void Function(
-          InAppWebViewController controller, Uri? url, bool? androidIsReload)?
-      onUpdateVisitedHistory;
+  final void Function(InAppWebViewController controller, Uri? url, bool? androidIsReload)? onUpdateVisitedHistory;
 
-  @override
   final void Function(InAppWebViewController controller)? onWebViewCreated;
 
-  @override
-  final Future<AjaxRequest?> Function(
-          InAppWebViewController controller, AjaxRequest ajaxRequest)?
+  final Future<AjaxRequest?> Function(InAppWebViewController controller, AjaxRequest ajaxRequest)?
       shouldInterceptAjaxRequest;
 
-  @override
-  final Future<FetchRequest?> Function(
-          InAppWebViewController controller, FetchRequest fetchRequest)?
+  final Future<FetchRequest?> Function(InAppWebViewController controller, FetchRequest fetchRequest)?
       shouldInterceptFetchRequest;
 
-  @override
-  final Future<NavigationActionPolicy?> Function(
-          InAppWebViewController controller, NavigationAction navigationAction)?
+  final Future<NavigationActionPolicy?> Function(InAppWebViewController controller, NavigationAction navigationAction)?
       shouldOverrideUrlLoading;
 
-  @override
   final void Function(InAppWebViewController controller)? onEnterFullscreen;
 
-  @override
   final void Function(InAppWebViewController controller)? onExitFullscreen;
 
-  @override
-  final void Function(InAppWebViewController controller, int x, int y,
-      bool clampedX, bool clampedY)? onOverScrolled;
+  final void Function(InAppWebViewController controller, int x, int y, bool clampedX, bool clampedY)? onOverScrolled;
 
-  @override
-  final void Function(
-          InAppWebViewController controller, double oldScale, double newScale)?
-      onZoomScaleChanged;
+  final void Function(InAppWebViewController controller, double oldScale, double newScale)? onZoomScaleChanged;
 
-  @override
-  final Future<WebResourceResponse?> Function(
-          InAppWebViewController controller, WebResourceRequest request)?
+  final Future<WebResourceResponse?> Function(InAppWebViewController controller, WebResourceRequest request)?
       androidShouldInterceptRequest;
 
-  @override
-  final Future<WebViewRenderProcessAction?> Function(
-          InAppWebViewController controller, Uri? url)?
+  final Future<WebViewRenderProcessAction?> Function(InAppWebViewController controller, Uri? url)?
       androidOnRenderProcessUnresponsive;
 
-  @override
-  final Future<WebViewRenderProcessAction?> Function(
-          InAppWebViewController controller, Uri? url)?
+  final Future<WebViewRenderProcessAction?> Function(InAppWebViewController controller, Uri? url)?
       androidOnRenderProcessResponsive;
 
-  @override
-  final void Function(
-          InAppWebViewController controller, RenderProcessGoneDetail detail)?
-      androidOnRenderProcessGone;
+  final void Function(InAppWebViewController controller, RenderProcessGoneDetail detail)? androidOnRenderProcessGone;
 
-  @override
-  final Future<FormResubmissionAction?> Function(
-      InAppWebViewController controller, Uri? url)? androidOnFormResubmission;
+  final Future<FormResubmissionAction?> Function(InAppWebViewController controller, Uri? url)?
+      androidOnFormResubmission;
 
-  ///Use [onZoomScaleChanged] instead.
-  @Deprecated('Use `onZoomScaleChanged` instead')
-  @override
-  final void Function(
-          InAppWebViewController controller, double oldScale, double newScale)?
-      androidOnScaleChanged;
-
-  @override
   final Future<JsBeforeUnloadResponse?> Function(
-      InAppWebViewController controller,
-      JsBeforeUnloadRequest jsBeforeUnloadRequest)? androidOnJsBeforeUnload;
+      InAppWebViewController controller, JsBeforeUnloadRequest jsBeforeUnloadRequest)? androidOnJsBeforeUnload;
 
-  @override
-  final void Function(
-          InAppWebViewController controller, LoginRequest loginRequest)?
-      androidOnReceivedLoginRequest;
-  final Future<String> Function(InAppWebViewController controller,
-      JsTransactionObject data, int chainId)? signTransaction;
-  final Future<String> Function(
-          InAppWebViewController controller, String data, int chainId)?
-      signPersonalMessage;
-  final Future<String> Function(
-      InAppWebViewController controller, String data, int chainId)? signMessage;
-  final Future<String> Function(InAppWebViewController controller,
-      JsEthSignTypedData data, int chainId)? signTypedMessage;
-  final Future<String> Function(InAppWebViewController controller,
-      JsEcRecoverObject data, int chainId)? ecRecover;
-  final Future<IncomingAccountsModel> Function(
-          InAppWebViewController controller, String data, int chainId)?
+  final void Function(InAppWebViewController controller, LoginRequest loginRequest)? androidOnReceivedLoginRequest;
+  final Future<String> Function(InAppWebViewController controller, JsTransactionObject data, int chainId)?
+      signTransaction;
+  final Future<String> Function(InAppWebViewController controller, String data, int chainId)? signPersonalMessage;
+  final Future<String> Function(InAppWebViewController controller, String data, int chainId)? signMessage;
+  final Future<String> Function(InAppWebViewController controller, JsEthSignTypedData data, int chainId)?
+      signTypedMessage;
+  final Future<String> Function(InAppWebViewController controller, JsEcRecoverObject data, int chainId)? ecRecover;
+  final Future<IncomingAccountsModel> Function(InAppWebViewController controller, String data, int chainId)?
       requestAccounts;
-  final Future<String> Function(
-          InAppWebViewController controller, JsWatchAsset data, int chainId)?
-      watchAsset;
+  final Future<String> Function(InAppWebViewController controller, JsWatchAsset data, int chainId)? watchAsset;
 
-  final Future<String> Function(InAppWebViewController controller,
-      JsAddEthereumChain data, int chainId)? addEthereumChain;
+  final Future<String> Function(InAppWebViewController controller, JsAddEthereumChain data, int chainId)?
+      addEthereumChain;
 }
 
 class _InjectedWebviewState extends State<InjectedWebview> {
@@ -407,10 +273,9 @@ class _InjectedWebviewState extends State<InjectedWebview> {
       initialUrlRequest: widget.initialUrlRequest,
       initialFile: widget.initialFile,
       initialData: widget.initialData,
-      initialOptions: widget.initialOptions,
+      initialSettings: widget.initialSettings,
       initialUserScripts: widget.initialUserScripts,
       pullToRefreshController: widget.pullToRefreshController,
-      implementation: widget.implementation,
       contextMenu: widget.contextMenu,
       onWebViewCreated: widget.onWebViewCreated,
       onLoadStart: (controller, uri) async {
@@ -423,8 +288,7 @@ class _InjectedWebviewState extends State<InjectedWebview> {
 
         widget.onLoadStop?.call(controller, uri);
       },
-      onLoadError: widget.onLoadError,
-      onLoadHttpError: widget.onLoadHttpError,
+      onReceivedError: widget.onReceivedError,
       onConsoleMessage: (
         controller,
         consoleMessage,
@@ -445,9 +309,8 @@ class _InjectedWebviewState extends State<InjectedWebview> {
       shouldOverrideUrlLoading: widget.shouldOverrideUrlLoading,
       onLoadResource: widget.onLoadResource,
       onScrollChanged: widget.onScrollChanged,
-      onDownloadStart: widget.onDownloadStart,
       onDownloadStartRequest: widget.onDownloadStartRequest,
-      onLoadResourceCustomScheme: widget.onLoadResourceCustomScheme,
+      onLoadResourceWithCustomScheme: widget.onLoadResourceCustomScheme,
       onCreateWindow: widget.onCreateWindow,
       onCloseWindow: widget.onCloseWindow,
       onJsAlert: widget.onJsAlert,
@@ -456,13 +319,13 @@ class _InjectedWebviewState extends State<InjectedWebview> {
       onReceivedHttpAuthRequest: widget.onReceivedHttpAuthRequest,
       onReceivedServerTrustAuthRequest: widget.onReceivedServerTrustAuthRequest,
       onReceivedClientCertRequest: widget.onReceivedClientCertRequest,
-      onFindResultReceived: widget.onFindResultReceived,
+      findInteractionController: widget.findInteractionController,
       shouldInterceptAjaxRequest: widget.shouldInterceptAjaxRequest,
       onAjaxReadyStateChange: widget.onAjaxReadyStateChange,
       onAjaxProgress: widget.onAjaxProgress,
       shouldInterceptFetchRequest: widget.shouldInterceptFetchRequest,
       onUpdateVisitedHistory: widget.onUpdateVisitedHistory,
-      onPrint: widget.onPrint,
+      onPrintRequest: widget.onPrintRequest,
       onLongPressHitTestResult: widget.onLongPressHitTestResult,
       onEnterFullscreen: widget.onEnterFullscreen,
       onExitFullscreen: widget.onExitFullscreen,
@@ -472,29 +335,23 @@ class _InjectedWebviewState extends State<InjectedWebview> {
       onWindowBlur: widget.onWindowBlur,
       onOverScrolled: widget.onOverScrolled,
       onZoomScaleChanged: widget.onZoomScaleChanged,
-      androidOnSafeBrowsingHit: widget.androidOnSafeBrowsingHit,
-      androidOnPermissionRequest: widget.androidOnPermissionRequest,
-      androidOnGeolocationPermissionsShowPrompt:
-          widget.androidOnGeolocationPermissionsShowPrompt,
-      androidOnGeolocationPermissionsHidePrompt:
-          widget.androidOnGeolocationPermissionsHidePrompt,
-      androidShouldInterceptRequest: widget.androidShouldInterceptRequest,
-      androidOnRenderProcessGone: widget.androidOnRenderProcessGone,
-      androidOnRenderProcessResponsive: widget.androidOnRenderProcessResponsive,
-      androidOnRenderProcessUnresponsive:
-          widget.androidOnRenderProcessUnresponsive,
-      androidOnFormResubmission: widget.androidOnFormResubmission,
-      androidOnScaleChanged: widget.androidOnScaleChanged,
-      androidOnReceivedIcon: widget.androidOnReceivedIcon,
-      androidOnReceivedTouchIconUrl: widget.androidOnReceivedTouchIconUrl,
-      androidOnJsBeforeUnload: widget.androidOnJsBeforeUnload,
-      androidOnReceivedLoginRequest: widget.androidOnReceivedLoginRequest,
-      iosOnWebContentProcessDidTerminate:
-          widget.iosOnWebContentProcessDidTerminate,
-      iosOnDidReceiveServerRedirectForProvisionalNavigation:
-          widget.iosOnDidReceiveServerRedirectForProvisionalNavigation,
-      iosOnNavigationResponse: widget.iosOnNavigationResponse,
-      iosShouldAllowDeprecatedTLS: widget.iosShouldAllowDeprecatedTLS,
+      onSafeBrowsingHit: widget.androidOnSafeBrowsingHit,
+      onPermissionRequest: widget.androidOnPermissionRequest,
+      onGeolocationPermissionsShowPrompt: widget.androidOnGeolocationPermissionsShowPrompt,
+      onGeolocationPermissionsHidePrompt: widget.androidOnGeolocationPermissionsHidePrompt,
+      shouldInterceptRequest: widget.androidShouldInterceptRequest,
+      onRenderProcessGone: widget.androidOnRenderProcessGone,
+      onRenderProcessResponsive: widget.androidOnRenderProcessResponsive,
+      onRenderProcessUnresponsive: widget.androidOnRenderProcessUnresponsive,
+      onFormResubmission: widget.androidOnFormResubmission,
+      onReceivedIcon: widget.androidOnReceivedIcon,
+      onReceivedTouchIconUrl: widget.androidOnReceivedTouchIconUrl,
+      onJsBeforeUnload: widget.androidOnJsBeforeUnload,
+      onReceivedLoginRequest: widget.androidOnReceivedLoginRequest,
+      onWebContentProcessDidTerminate: widget.iosOnWebContentProcessDidTerminate,
+      onDidReceiveServerRedirectForProvisionalNavigation: widget.iosOnDidReceiveServerRedirectForProvisionalNavigation,
+      onNavigationResponse: widget.iosOnNavigationResponse,
+      shouldAllowDeprecatedTLS: widget.iosShouldAllowDeprecatedTLS,
       gestureRecognizers: widget.gestureRecognizers,
     );
   }
@@ -503,12 +360,10 @@ class _InjectedWebviewState extends State<InjectedWebview> {
     await controller.injectJavascriptFileFromAsset(
         assetFilePath: "packages/flutter_injected_web3/assets/provider.min.js");
 
-    String initJs = reInit
-        ? _loadReInt(widget.chainId, widget.rpc, address)
-        : _loadInitJs(widget.chainId, widget.rpc);
+    String initJs = reInit ? _loadReInt(widget.chainId, widget.rpc, address) : _loadInitJs(widget.chainId, widget.rpc);
     debugPrint("RPC: ${widget.rpc}");
     await controller.evaluateJavascript(source: initJs);
-    if (controller.javaScriptHandlersMap["OrangeHandler"] == null) {
+    if (controller.hasJavaScriptHandler(handlerName: "OrangeHandler")) {
       controller.addJavaScriptHandler(
           handlerName: "OrangeHandler",
           callback: (callback) async {
@@ -519,21 +374,15 @@ class _InjectedWebviewState extends State<InjectedWebview> {
               case "signTransaction":
                 {
                   try {
-                    final data =
-                        JsTransactionObject.fromJson(jsData.object ?? {});
+                    final data = JsTransactionObject.fromJson(jsData.object ?? {});
 
-                    widget.signTransaction
-                        ?.call(controller, data, widget.chainId)
-                        .then((signedData) {
-                      _sendResult(
-                          controller, "ethereum", signedData, jsData.id ?? 0);
+                    widget.signTransaction?.call(controller, data, widget.chainId).then((signedData) {
+                      _sendResult(controller, "ethereum", signedData, jsData.id ?? 0);
                     }).onError((e, stackTrace) {
-                      _sendError(
-                          controller, "ethereum", e.toString(), jsData.id ?? 0);
+                      _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                     });
                   } catch (e) {
-                    _sendError(
-                        controller, "ethereum", e.toString(), jsData.id ?? 0);
+                    _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                   }
                   break;
                 }
@@ -542,18 +391,13 @@ class _InjectedWebviewState extends State<InjectedWebview> {
                   try {
                     final data = JsDataModel.fromJson(jsData.object ?? {});
 
-                    widget.signPersonalMessage
-                        ?.call(controller, data.data ?? "", widget.chainId)
-                        .then((signedData) {
-                      _sendResult(
-                          controller, "ethereum", signedData, jsData.id ?? 0);
+                    widget.signPersonalMessage?.call(controller, data.data ?? "", widget.chainId).then((signedData) {
+                      _sendResult(controller, "ethereum", signedData, jsData.id ?? 0);
                     }).onError((e, stackTrace) {
-                      _sendError(
-                          controller, "ethereum", e.toString(), jsData.id ?? 0);
+                      _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                     });
                   } catch (e) {
-                    _sendError(
-                        controller, "ethereum", e.toString(), jsData.id ?? 0);
+                    _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                   }
                   break;
                 }
@@ -562,18 +406,13 @@ class _InjectedWebviewState extends State<InjectedWebview> {
                   try {
                     final data = JsDataModel.fromJson(jsData.object ?? {});
 
-                    widget.signMessage
-                        ?.call(controller, data.data ?? "", widget.chainId)
-                        .then((signedData) {
-                      _sendResult(
-                          controller, "ethereum", signedData, jsData.id ?? 0);
+                    widget.signMessage?.call(controller, data.data ?? "", widget.chainId).then((signedData) {
+                      _sendResult(controller, "ethereum", signedData, jsData.id ?? 0);
                     }).onError((e, stackTrace) {
-                      _sendError(
-                          controller, "ethereum", e.toString(), jsData.id ?? 0);
+                      _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                     });
                   } catch (e) {
-                    _sendError(
-                        controller, "ethereum", e.toString(), jsData.id ?? 0);
+                    _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                   }
                   break;
                 }
@@ -582,18 +421,13 @@ class _InjectedWebviewState extends State<InjectedWebview> {
                   final data = JsEthSignTypedData.fromJson(jsData.object ?? {});
 
                   try {
-                    widget.signTypedMessage
-                        ?.call(controller, data, widget.chainId)
-                        .then((signedData) {
-                      _sendResult(
-                          controller, "ethereum", signedData, jsData.id ?? 0);
+                    widget.signTypedMessage?.call(controller, data, widget.chainId).then((signedData) {
+                      _sendResult(controller, "ethereum", signedData, jsData.id ?? 0);
                     }).onError((e, stackTrace) {
-                      _sendError(
-                          controller, "ethereum", e.toString(), jsData.id ?? 0);
+                      _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                     });
                   } catch (e) {
-                    _sendError(
-                        controller, "ethereum", e.toString(), jsData.id ?? 0);
+                    _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                   }
                   break;
                 }
@@ -602,18 +436,13 @@ class _InjectedWebviewState extends State<InjectedWebview> {
                   final data = JsEcRecoverObject.fromJson(jsData.object ?? {});
 
                   try {
-                    widget.ecRecover
-                        ?.call(controller, data, widget.chainId)
-                        .then((signedData) {
-                      _sendResult(
-                          controller, "ethereum", signedData, jsData.id ?? 0);
+                    widget.ecRecover?.call(controller, data, widget.chainId).then((signedData) {
+                      _sendResult(controller, "ethereum", signedData, jsData.id ?? 0);
                     }).onError((e, stackTrace) {
-                      _sendError(
-                          controller, "ethereum", e.toString(), jsData.id ?? 0);
+                      _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                     });
                   } catch (e) {
-                    _sendError(
-                        controller, "ethereum", e.toString(), jsData.id ?? 0);
+                    _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                   }
                   break;
                 }
@@ -621,37 +450,28 @@ class _InjectedWebviewState extends State<InjectedWebview> {
                 {
                   try {
                     debugPrint(widget.requestAccounts.toString());
-                    widget.requestAccounts
-                        ?.call(controller, "", widget.chainId)
-                        .then((signedData) async {
-                      final setAddress =
-                          "window.ethereum.setAddress(\"${signedData.address}\");";
+                    widget.requestAccounts?.call(controller, "", widget.chainId).then((signedData) async {
+                      final setAddress = "window.ethereum.setAddress(\"${signedData.address}\");";
                       address = signedData.address!;
-                      String callback =
-                          "window.ethereum.sendResponse(${jsData.id}, [\"${signedData.address}\"])";
+                      String callback = "window.ethereum.sendResponse(${jsData.id}, [\"${signedData.address}\"])";
                       await _sendCustomResponse(controller, setAddress);
                       await _sendCustomResponse(controller, callback);
 
                       if (widget.chainId != signedData.chainId) {
-                        final initString = _addChain(
-                            signedData.chainId!,
-                            signedData.rpcUrl!,
-                            signedData.address!,
-                            widget.isDebug);
+                        final initString =
+                            _addChain(signedData.chainId!, signedData.rpcUrl!, signedData.address!, widget.isDebug);
                         widget.chainId = signedData.chainId!;
                         widget.rpc = signedData.rpcUrl!;
                         await _sendCustomResponse(controller, initString);
                       }
                     }).onError((e, stackTrace) {
                       debugPrint(e.toString());
-                      _sendError(
-                          controller, "ethereum", e.toString(), jsData.id ?? 0);
+                      _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                     });
                   } catch (e) {
                     debugPrint(e.toString());
 
-                    _sendError(
-                        controller, "ethereum", e.toString(), jsData.id ?? 0);
+                    _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                   }
                   break;
                 }
@@ -660,74 +480,55 @@ class _InjectedWebviewState extends State<InjectedWebview> {
                   try {
                     final data = JsWatchAsset.fromJson(jsData.object ?? {});
 
-                    widget.watchAsset
-                        ?.call(controller, data, widget.chainId)
-                        .then((signedData) {
-                      _sendResult(
-                          controller, "ethereum", signedData, jsData.id ?? 0);
+                    widget.watchAsset?.call(controller, data, widget.chainId).then((signedData) {
+                      _sendResult(controller, "ethereum", signedData, jsData.id ?? 0);
                     }).onError((e, stackTrace) {
-                      _sendError(
-                          controller, "ethereum", e.toString(), jsData.id ?? 0);
+                      _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                     });
                   } catch (e) {
-                    _sendError(
-                        controller, "ethereum", e.toString(), jsData.id ?? 0);
+                    _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                   }
                   break;
                 }
               case "addEthereumChain":
                 {
                   try {
-                    final data =
-                        JsAddEthereumChain.fromJson(jsData.object ?? {});
-                    widget.addEthereumChain
-                        ?.call(controller, data, widget.chainId)
-                        .then((signedData) {
-                      final initString = _addChain(int.parse(data.chainId!),
-                          signedData, address, widget.isDebug);
+                    final data = JsAddEthereumChain.fromJson(jsData.object ?? {});
+                    widget.addEthereumChain?.call(controller, data, widget.chainId).then((signedData) {
+                      final initString = _addChain(int.parse(data.chainId!), signedData, address, widget.isDebug);
                       widget.chainId = int.parse(data.chainId!);
                       widget.rpc = signedData;
                       _sendCustomResponse(controller, initString);
                     }).onError((e, stackTrace) {
-                      _sendError(
-                          controller, "ethereum", e.toString(), jsData.id ?? 0);
+                      _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                     });
                   } catch (e) {
-                    _sendError(
-                        controller, "ethereum", e.toString(), jsData.id ?? 0);
+                    _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                   }
                   break;
                 }
               case "switchEthereumChain":
                 {
                   try {
-                    final data =
-                        JsAddEthereumChain.fromJson(jsData.object ?? {});
+                    final data = JsAddEthereumChain.fromJson(jsData.object ?? {});
 
-                    widget.addEthereumChain
-                        ?.call(controller, data, widget.chainId)
-                        .then((signedData) {
-                      _sendResult(
-                          controller, "ethereum", signedData, jsData.id ?? 0);
+                    widget.addEthereumChain?.call(controller, data, widget.chainId).then((signedData) {
+                      _sendResult(controller, "ethereum", signedData, jsData.id ?? 0);
                       widget.chainId = int.parse(data.chainId!);
                       widget.rpc = signedData;
-                      final initString = _addChain(int.parse(data.chainId!),
-                          signedData, address, widget.isDebug);
+                      final initString = _addChain(int.parse(data.chainId!), signedData, address, widget.isDebug);
                       _sendCustomResponse(controller, initString);
                     }).onError((e, stackTrace) {
-                      _sendError(
-                          controller, "ethereum", e.toString(), jsData.id ?? 0);
+                      _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                     });
                   } catch (e) {
-                    _sendError(
-                        controller, "ethereum", e.toString(), jsData.id ?? 0);
+                    _sendError(controller, "ethereum", e.toString(), jsData.id ?? 0);
                   }
                   break;
                 }
               default:
                 {
-                  _sendError(controller, jsData.network.toString(),
-                      "Operation not supported", jsData.id ?? 0);
+                  _sendError(controller, jsData.network.toString(), "Operation not supported", jsData.id ?? 0);
                   break;
                 }
             }
@@ -802,14 +603,12 @@ class _InjectedWebviewState extends State<InjectedWebview> {
     return source;
   }
 
-  Future<void> _sendError(InAppWebViewController controller, String network,
-      String message, int methodId) {
+  Future<void> _sendError(InAppWebViewController controller, String network, String message, int methodId) {
     String script = "window.$network.sendError($methodId, \"$message\")";
     return controller.evaluateJavascript(source: script);
   }
 
-  Future<void> _sendResult(InAppWebViewController controller, String network,
-      String message, int methodId) {
+  Future<void> _sendResult(InAppWebViewController controller, String network, String message, int methodId) {
     String script = "window.$network.sendResponse($methodId, \"$message\")";
     debugPrint(script);
     return controller
@@ -818,16 +617,14 @@ class _InjectedWebviewState extends State<InjectedWebview> {
         .onError((error, stackTrace) => debugPrint(error.toString()));
   }
 
-  Future<void> _sendCustomResponse(
-      InAppWebViewController controller, String response) {
+  Future<void> _sendCustomResponse(InAppWebViewController controller, String response) {
     return controller
         .evaluateJavascript(source: response)
         .then((value) => debugPrint(value))
         .onError((error, stackTrace) => debugPrint(error.toString()));
   }
 
-  Future<void> _sendResults(InAppWebViewController controller, String network,
-      List<String> messages, int methodId) {
+  Future<void> _sendResults(InAppWebViewController controller, String network, List<String> messages, int methodId) {
     String message = messages.join(",");
     String script = "window.$network.sendResponse($methodId, \"$message\")";
     return controller.evaluateJavascript(source: script);
